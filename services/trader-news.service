@@ -1,0 +1,16 @@
+[Unit]
+Description=Autonomous Oil Trader — News Collector
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/autonomous-oiltrader
+EnvironmentFile=%h/autonomous-oiltrader/.env
+ExecStart=/usr/bin/env python -m daemons.news_collector
+Restart=on-failure
+RestartSec=60
+StandardOutput=append:%h/autonomous-oiltrader/logs/news.log
+StandardError=append:%h/autonomous-oiltrader/logs/news.err
+
+[Install]
+WantedBy=default.target

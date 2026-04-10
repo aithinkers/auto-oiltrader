@@ -1,0 +1,16 @@
+[Unit]
+Description=Autonomous Oil Trader — Stream Daemon
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/autonomous-oiltrader
+EnvironmentFile=%h/autonomous-oiltrader/.env
+ExecStart=/usr/bin/env python -m daemons.stream_daemon
+Restart=on-failure
+RestartSec=30
+StandardOutput=append:%h/autonomous-oiltrader/logs/stream.log
+StandardError=append:%h/autonomous-oiltrader/logs/stream.err
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,198 @@
+# Strategy library. Each entry has a tier, parameters, and is loaded by the trader daemon.
+# Tiers: experimental | shadow | paper | draft | live
+# Promotion is human-gated; the system never auto-promotes between tiers.
+
+strategies:
+
+  # ─── Range / premium-collection ──────────────────────────────────────
+  - id: iron_condor_range_lo
+    name: "LO Iron Condor (range-bound)"
+    class: strategies.iron_condor_range.IronCondorRange
+    tier: paper
+    enabled: true
+    params:
+      trading_class: LO
+      target_dte_min: 10
+      target_dte_max: 45
+      short_put_delta: -0.20
+      long_put_offset: 2          # tightened to fit $2k per-position cap
+      short_call_delta: 0.20
+      long_call_offset: 2
+      min_credit_pct_of_width: 0.20
+      vol_filter_min_iv: 0.40
+      profit_target_pct: 0.50
+      stop_loss_pct: 1.00
+      time_stop_dte: 3
+      max_concurrent: 3
+      default_qty: 1
+      # ── Enhanced exit rules ──
+      vol_crush_exit_pts: 10         # take profit early if ATM IV drops ≥ 10 vol pts AND pnl > 0
+      trail_activate_pct: 0.60       # arm trail once unrealized PnL ≥ 60% of max-profit proxy
+      trail_giveback_pct: 0.30       # exit if pnl retraces ≥ 30% from peak
+      short_strike_buffer_pct: 0.015 # defensive close if underlying within 1.5% of short strike
+      min_combo_spread_pct: 0.35     # defer TARGET exits only if combo bid/ask > 35% of mid
+
+  # ─── Bullish spreads ──────────────────────────────────────────────────
+  - id: bull_put_credit_lo
+    name: "LO Bull Put Credit Spread"
+    class: strategies.bull_put_credit.BullPutCredit
+    tier: paper
+    enabled: true
+    params:
+      trading_class: LO
+      target_dte_min: 10            # match dte_policy.premium_sell_normal floor
+      target_dte_max: 45            # widened so the next monthly expiry qualifies
+      short_put_delta: -0.25
+      wing_offset: 2              # tightened to fit $2k per-position cap
+      vol_filter_min_iv: 0.40
+      min_credit_pct_of_width: 0.15
+      profit_target_pct: 0.50
+      stop_loss_pct: 1.50
+      time_stop_dte: 3
+      max_concurrent: 2
+      default_qty: 1
+      # ── Enhanced exit rules ──
+      vol_crush_exit_pts: 10
+      trail_activate_pct: 0.60
+      trail_giveback_pct: 0.30
+      short_strike_buffer_pct: 0.015
+      min_combo_spread_pct: 0.35
+
+  - id: bull_call_debit_lo
+    name: "LO Bull Call Debit Spread"
+    class: strategies.bull_call_debit.BullCallDebit
+    tier: experimental
+    enabled: true
+    params:
+      trading_class: LO
+      target_dte_min: 10            # match dte_policy.premium_sell_normal floor
+      target_dte_max: 45            # widened so the next monthly expiry qualifies
+      long_call_delta: 0.50
+      width: 2                    # narrower so debit fits the cap
+      max_iv: 0.80
+      max_debit_pct_of_width: 0.50
+      profit_target_pct: 0.75
+      stop_loss_pct: 0.50
+      time_stop_dte: 2
+      max_concurrent: 2
+      default_qty: 1
+      # ── Enhanced exit rules (trailing + spread defense) ──
+      trail_activate_pct: 0.50
+      trail_giveback_pct: 0.30
+      min_combo_spread_pct: 0.35
+
+  # ─── Bearish spreads ──────────────────────────────────────────────────
+  - id: bear_call_credit_lo
+    name: "LO Bear Call Credit Spread"
+    class: strategies.bear_call_credit.BearCallCredit
+    tier: paper
+    enabled: true
+    params:
+      trading_class: LO
+      target_dte_min: 10            # match dte_policy.premium_sell_normal floor
+      target_dte_max: 45            # widened so the next monthly expiry qualifies
+      short_call_delta: 0.25
+      wing_offset: 2              # tightened to fit $2k per-position cap
+      vol_filter_min_iv: 0.40
+      min_credit_pct_of_width: 0.15
+      profit_target_pct: 0.50
+      stop_loss_pct: 1.50
+      time_stop_dte: 3
+      max_concurrent: 2
+      default_qty: 1
+      # ── Enhanced exit rules ──
+      vol_crush_exit_pts: 10
+      trail_activate_pct: 0.60
+      trail_giveback_pct: 0.30
+      short_strike_buffer_pct: 0.015
+      min_combo_spread_pct: 0.35
+
+  - id: bear_put_debit_lo
+    name: "LO Bear Put Debit Spread"
+    class: strategies.bear_put_debit.BearPutDebit
+    tier: experimental
+    enabled: true
+    params:
+      trading_class: LO
+      target_dte_min: 10            # match dte_policy.premium_sell_normal floor
+      target_dte_max: 45            # widened so the next monthly expiry qualifies
+      long_put_delta: -0.50
+      width: 2                    # narrower so debit fits the cap
+      max_iv: 0.80
+      max_debit_pct_of_width: 0.50
+      profit_target_pct: 0.75
+      stop_loss_pct: 0.50
+      time_stop_dte: 2
+      max_concurrent: 2
+      default_qty: 1
+      # ── Enhanced exit rules (trailing + spread defense) ──
+      trail_activate_pct: 0.50
+      trail_giveback_pct: 0.30
+      min_combo_spread_pct: 0.35
+
+  # ─── Pin trades ───────────────────────────────────────────────────────
+  - id: butterfly_pin_lo
+    name: "LO Long Butterfly (pin trade)"
+    class: strategies.butterfly_pin.ButterflyPin
+    tier: experimental
+    enabled: false
+    params:
+      trading_class: LO
+      target_dte_min: 5
+      target_dte_max: 10
+      body_strike_method: rnd_median
+      wing_offset: 5
+      max_debit_pct_of_width: 0.20
+      profit_target_pct: 2.00
+      stop_loss_pct: 0.50
+      time_stop_dte: 2
+      max_concurrent: 2
+
+  # ─── Vol crush / event plays ──────────────────────────────────────────
+  - id: vol_crush_post_event
+    name: "Post-event vol crush (sell strangle after binary)"
+    class: strategies.vol_crush_post_event.VolCrushPostEvent
+    tier: experimental
+    enabled: false
+    params:
+      trading_class: LO
+      iv_drop_threshold: 20
+      min_dte: 7
+      max_dte: 21
+      strangle_delta: 0.20
+      profit_target_pct: 0.30
+      stop_loss_pct: 1.50
+      max_concurrent: 1
+
+  - id: long_strangle_event_lo
+    name: "LO Long Strangle (binary event play)"
+    class: strategies.long_strangle_event.LongStrangleEvent
+    tier: experimental
+    enabled: false        # only fires when news_collector flags event_imminent
+    params:
+      trading_class: LO
+      target_dte_min: 1
+      target_dte_max: 5
+      call_delta: 0.20
+      put_delta: -0.20
+      max_iv: 0.80
+      profit_target_pct: 1.00
+      stop_loss_pct: 0.50
+      time_stop_dte: 1
+      max_concurrent: 1
+      default_qty: 1
+
+  - id: eia_wednesday
+    name: "EIA Wednesday vol play"
+    class: strategies.eia_wednesday.EIAWednesday
+    tier: experimental
+    enabled: false
+    params:
+      entry_dow: tuesday
+      entry_hour_et: 15
+      exit_dow: wednesday
+      exit_hour_et: 11
+      structure: long_strangle
+      strangle_offset_pct: 0.025
+      max_debit: 1500
+      max_concurrent: 1

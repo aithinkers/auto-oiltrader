@@ -1,0 +1,61 @@
+# User-provided pattern hints. The agent treats these as soft heuristics, NOT rules.
+# Each pattern has a weight (0..1) representing how much trust to assign.
+# Patterns are loaded into the analysis agent's prompt as soft context.
+
+patterns:
+
+  - id: bid_ask_walking_fills
+    name: "Walk limit price 1-2 cents on wide bid/ask"
+    description: |
+      When ask/bid spread on a CL FOP is wide (> 5% of mid), placing the order
+      1-2 cents above (for buys) or below (for sells) the current mid significantly
+      improves fill probability. The trade agent should use a walking limit strategy:
+      start at mid, walk in 1-cent increments toward the worse side every 15 seconds,
+      with a hard cap on total walk distance (~10% of mid).
+    weight: 0.95                   # high trust — operationally useful
+    category: execution
+    active: true
+
+  - id: front_vol_crush
+    name: "Front-month vol >100% almost always crushes within 3 days post-event"
+    description: |
+      When LO front-month ATM IV > 100% AND a binary geopolitical event has resolved
+      (deadline passed, news digested), implied vol typically crushes 30-50 vol pts
+      within 3 trading days. Selling premium structures (iron condor, short strangle)
+      have positive EV in this regime.
+    weight: 0.65
+    category: vol_regime
+    active: true
+
+  - id: oversold_bounce
+    name: "5%+ daily drop often produces 2%+ next-day bounce"
+    description: |
+      Empirically, when CL drops 5%+ in a single session on no fundamental catalyst,
+      ~70% of the time there is a 2%+ bounce within the next 24 hours. Long upside
+      verticals (call debit spreads) and short put spreads have better-than-fair EV
+      in this setup. Skip this pattern if drop is on confirmed bearish fundamentals
+      (OPEC supply increase, demand collapse, war ending).
+    weight: 0.55
+    category: mean_reversion
+    active: true
+
+  - id: pre_eia_drift
+    name: "CL drifts in pattern of recent rig count change before EIA"
+    description: |
+      In the 48 hours leading up to Wednesday's EIA report, CL often drifts in the
+      direction implied by Friday's prior week rig count: rising rigs → bearish drift,
+      falling rigs → bullish drift. Bias entries accordingly Mon-Tue.
+    weight: 0.4
+    category: scheduled_event
+    active: true
+
+  - id: dealer_gamma_pin
+    name: "OI concentration creates gravity at strike near expiry"
+    description: |
+      When a single strike has OI > 5x the average across the chain AND DTE < 5,
+      the underlying tends to be drawn toward that strike via dealer delta-hedging.
+      Butterfly trades targeting that strike have elevated EV in the last 2-3 days
+      before expiry.
+    weight: 0.5
+    category: positioning
+    active: true

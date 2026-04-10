@@ -1,0 +1,66 @@
+# News sources the news_collector daemon polls.
+# All free for now. Paid sources can be added later if value is proven.
+
+sources:
+
+  - id: eia_petroleum_status
+    name: "EIA Weekly Petroleum Status Report"
+    type: api
+    url: "https://api.eia.gov/v2/petroleum/sum/sndw/data/"
+    auth_env: EIA_API_KEY               # optional but recommended (free at eia.gov)
+    poll_schedule: "wed 10:30 ET"
+    impact: high
+    enabled: true
+
+  - id: eia_steo
+    name: "EIA Short-Term Energy Outlook"
+    type: api
+    url: "https://api.eia.gov/v2/steo/data/"
+    auth_env: EIA_API_KEY
+    poll_schedule: "monthly"
+    impact: medium
+    enabled: true
+
+  - id: cme_settlement
+    name: "CME Daily Settlement (CL)"
+    type: http
+    url: "https://www.cmegroup.com/CmeWS/mvc/Settlements/Futures/Settlements/425/FUT"
+    poll_schedule: "daily 16:30 ET"
+    impact: medium
+    enabled: true
+
+  - id: reuters_commodities
+    name: "Reuters Commodities RSS"
+    type: rss
+    url: "https://www.reutersagency.com/feed/?best-topics=commodities&post_type=best"
+    poll_interval_min: 10
+    impact: medium
+    enabled: true
+
+  - id: opec_press
+    name: "OPEC Press Releases"
+    type: rss
+    url: "https://www.opec.org/opec_web/en/press_room/press_releases.xml"
+    poll_interval_min: 30
+    impact: high
+    enabled: true
+
+  - id: fred_calendar
+    name: "FRED Economic Calendar (Fed events)"
+    type: api
+    url: "https://api.stlouisfed.org/fred/series/observations"
+    auth_env: FRED_API_KEY              # free at fred.stlouisfed.org
+    poll_schedule: "daily 06:00 ET"
+    impact: low
+    enabled: false
+
+  - id: yahoo_finance_oil
+    name: "Yahoo Finance Energy News (RSS)"
+    type: rss
+    url: "https://feeds.finance.yahoo.com/rss/2.0/headline?s=CL=F&region=US&lang=en-US"
+    poll_interval_min: 15
+    impact: low
+    enabled: true
+
+# User observations are NOT polled — they come in via the dashboard / API.
+# They are ingested into the same `news` table with source='user_observation'.

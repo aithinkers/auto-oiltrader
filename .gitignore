@@ -1,0 +1,49 @@
+# Secrets
+.env
+config/secrets.env
+*.pem
+*.key
+
+# Local data
+data/
+*.duckdb
+*.duckdb-wal
+*.duckdb-shm
+*.db
+*.db-wal
+*.db-shm
+*.parquet
+
+# Logs
+logs/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+.eggs/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Streamlit
+.streamlit/secrets.toml

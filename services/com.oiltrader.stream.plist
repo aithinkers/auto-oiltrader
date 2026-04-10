@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- macOS launchd template — copy to ~/Library/LaunchAgents/ and edit paths -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.oiltrader.stream</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/env</string>
+    <string>python</string>
+    <string>-m</string>
+    <string>daemons.stream_daemon</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/YOURUSER/autonomous-oiltrader</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>TRADER_DB_PATH</key>
+    <string>/Users/YOURUSER/autonomous-oiltrader/data/trader.duckdb</string>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/YOURUSER/autonomous-oiltrader/logs/stream.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/YOURUSER/autonomous-oiltrader/logs/stream.err</string>
+</dict>
+</plist>

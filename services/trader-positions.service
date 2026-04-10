@@ -1,0 +1,16 @@
+[Unit]
+Description=Autonomous Oil Trader — Position Manager
+After=trader-stream.service network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/autonomous-oiltrader
+EnvironmentFile=%h/autonomous-oiltrader/.env
+ExecStart=/usr/bin/env python -m daemons.position_manager
+Restart=on-failure
+RestartSec=30
+StandardOutput=append:%h/autonomous-oiltrader/logs/positions.log
+StandardError=append:%h/autonomous-oiltrader/logs/positions.err
+
+[Install]
+WantedBy=default.target

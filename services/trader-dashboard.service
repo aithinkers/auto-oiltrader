@@ -1,0 +1,16 @@
+[Unit]
+Description=Autonomous Oil Trader — Streamlit Dashboard
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/autonomous-oiltrader
+EnvironmentFile=%h/autonomous-oiltrader/.env
+ExecStart=/usr/bin/env streamlit run interfaces/dashboard/app.py --server.headless true --server.port 8501
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:%h/autonomous-oiltrader/logs/dashboard.log
+StandardError=append:%h/autonomous-oiltrader/logs/dashboard.err
+
+[Install]
+WantedBy=default.target

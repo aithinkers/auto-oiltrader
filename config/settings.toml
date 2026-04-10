@@ -1,0 +1,159 @@
+# Autonomous Oil Trader — main configuration
+# All values can be overridden by environment variables. See .env.example.
+
+[capital]
+starting              = 20000.00     # paper capital ceiling, never auto-grows
+max_position_pct      = 0.10         # max single-position max-loss as fraction of starting
+max_book_pct          = 0.50         # max sum of open positions max-loss as fraction of starting
+daily_loss_halt       = 1000.00      # auto-halt at this $ loss for the trading day
+single_strategy_pct   = 0.30         # max % of starting allocated to one strategy
+
+[mode]
+default = "paper"  # paper | draft | live | halt
+
+[ib]
+host             = "127.0.0.1"
+port             = 7496              # 7496 = TWS live, 7497 = TWS paper, 4001/4002 = Gateway
+client_id_stream = 100
+client_id_trader = 101
+client_id_recon  = 102
+account          = ""                # set to your IB paper or live account number
+
+[symbols]
+primary   = ["CL"]
+secondary = ["BZ"]                   # for hedging / spread trades
+
+[stream]
+snapshot_interval_sec    = 120       # 2 min default
+strike_window            = 25        # ±N strikes around ATM for LO monthly
+weekly_strike_window     = 12
+include_brent            = true
+classes                  = ["LO", "LO1", "LO2", "LO3", "LO4"]
+max_lines                = 600
+
+[dte_policy]
+# Per-scenario minimum DTE for opening NEW positions. The trade agent uses
+# core.dte_policy.min_dte_for_new_position() to compute the floor for each
+# proposed trade. See docs/safety.md for the decision matrix.
+
+# Default floor — applied if no scenario matches
+default_min_dte                    = 10
+
+# Premium-collection scenarios (iron condor, short strangle, credit spreads)
+premium_sell_min_dte_calm          = 5      # IV>50%, RV<35%, no events → sweet spot
+premium_sell_min_dte_normal        = 10     # IV 30-80%, RV<50% → standard
+premium_sell_min_dte_high_vol      = 14     # IV>80% AND RV>50% → gamma risk too high
+
+# Long debit scenarios (debit spreads, butterflies)
+long_debit_min_dte_normal          = 5      # IV<50%, directional view
+long_debit_min_dte_high_iv         = 7      # IV>80% — vol crush risk
+long_debit_min_dte_wide_spread     = 10     # bid/ask>10% of mid — slippage kills edge
+
+# Pin trades — butterflies at OI magnet strikes
+pin_trade_min_dte_normal           = 5
+pin_trade_min_dte_strong_magnet    = 3      # OI > 5x average AND DTE ≤ 7
+
+# Hedges — exempt from default floor when reducing book risk
+hedge_min_dte                      = 1
+hedge_max_pct_of_book              = 0.50   # > this triggers human approval
+
+# Scheduled events (EIA, OPEC, Fed)
+event_trade_min_dte                = 1      # buy 1-2 days before, exit after
+event_trade_max_dte                = 14
+
+# Hard-NO conditions — these override every scenario
+refuse_dte_zero                    = true
+refuse_when_realized_vol_above     = 1.0    # 100% annualized
+refuse_when_combo_spread_pct_above = 0.25   # 25% of debit
+refuse_when_iv_change_60min_above  = 3.0    # 3 vol pts in 60 min = fast-move
+
+# Lookback windows
+fast_move_iv_change_window_min     = 60
+recent_news_critical_window_hours  = 6
+recent_news_critical_block_hours   = 1      # block all new for 1 hour after critical news
+recent_news_short_dte_block_hours  = 24     # block <14 DTE for 24h after critical
+
+[rolling_window]
+# How many forward months of futures + their LO chains to keep active.
+# Window is recomputed automatically each day at the rebuild_hour_et below.
+n_months_ahead              = 3
+# Drop a contract from the active set when it has fewer than this many days to expiry.
+# Existing positions on the dropped contract continue to be marked and managed,
+# but no NEW orders may be opened against it.
+drop_when_dte_le            = 5
+# Time of day to recompute the active set and resubscribe (24h ET).
+rebuild_hour_et             = 6
+# When a new front month is added, kick the analysis_agent so it considers
+# the new chain immediately rather than waiting for the next 15-min cycle.
+notify_on_roll              = true
+
+[anthropic]
+api_key_env       = "ANTHROPIC_API_KEY"
+monthly_budget    = 200.00            # hard cap; agents halt if exceeded
+default_model     = "claude-sonnet-4-6"
+cheap_model       = "claude-haiku-4-5-20251001"
+escalation_model  = "claude-opus-4-6"
+max_tokens_default = 2048
+
+[news]
+enabled              = true
+poll_interval_sec    = 600            # 10 min
+high_impact_alert    = true
+sources              = ["eia", "cme_settlement", "reuters_rss", "opec_rss", "fred"]
+
+[notifications]
+provider             = "ntfy"          # ntfy | pushover
+ntfy_topic_env       = "NTFY_TOPIC"
+ntfy_server_env      = "NTFY_SERVER"
+pushover_token_env   = "PUSHOVER_APP_TOKEN"
+pushover_user_env    = "PUSHOVER_USER_KEY"
+
+[summarizer]
+# Periodic catch-up digest written to the `summaries` table + markdown files.
+# Designed so the operator can leave the system running and check in once an hour.
+enabled              = true
+interval_seconds     = 3600          # 1 hour
+align_to_clock       = true          # if true, first run is at the next top-of-hour
+write_md_file        = true
+md_dir               = "./data/summaries"
+push_notifications   = false         # set true once NTFY_TOPIC env var is set
+push_threshold       = "all"         # all | important_only — important_only suppresses uneventful hours
+include_llm_narrative = false        # set true to enable narrator agent (Haiku, ~$0.10/day at hourly cadence). Requires ANTHROPIC_API_KEY.
+window_hours         = 1             # how far back to summarize (typically == interval / 3600)
+
+[learning]
+weekly_review_day    = "friday"
+weekly_review_time   = "16:30"        # ET
+auto_promote         = false           # always require human approval
+shadow_min_days      = 20
+shadow_min_sharpe    = 1.0
+shadow_max_drawdown  = 0.05
+correlation_max      = 0.6             # don't promote shadow strategies > this corr to live ones
+
+[remote]
+tailscale_enabled    = true
+api_port             = 8080
+dashboard_port       = 8501
+
+[display]
+# All timestamps are stored in UTC (to sort correctly and avoid DST drama).
+# This is the IANA timezone used for DISPLAY — dashboard, CLI output, summaries,
+# notifications. Change this to your local TZ if you're not in NYC.
+# Examples: America/New_York, America/Chicago, Europe/London, Asia/Singapore
+timezone         = "America/New_York"
+# strftime format for default timestamp rendering. Examples:
+#   "%Y-%m-%d %H:%M %Z"    → 2026-04-09 16:42 EDT
+#   "%a %b %d %I:%M %p"    → Wed Apr 09 04:42 PM
+#   "%H:%M:%S %Z"          → 16:42:17 EDT
+timestamp_format = "%Y-%m-%d %H:%M %Z"
+short_format     = "%H:%M %Z"
+
+[logging]
+level   = "INFO"
+to_file = true
+log_dir = "./logs"
+
+[paths]
+db_path      = "./data/trader.db"          # SQLite (WAL mode)
+snapshot_dir = "./data/snapshots"
+findings_dir = "./data/findings"
