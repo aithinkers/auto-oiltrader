@@ -230,3 +230,11 @@ This software is provided as-is for educational and research purposes. It is not
 ## License
 
 MIT License. See [LICENSE](LICENSE).
+
+## Want something like this for your own strategies?
+
+This repo is a working reference design. If you want a tailored version --
+different asset class, different broker, your own strategies, production-grade
+risk controls, or a walkthrough of how this one works -- we can help.
+
+**AI Thinkers** -- ai_trading@aithinkers.com
